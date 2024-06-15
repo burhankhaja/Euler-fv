@@ -205,6 +205,15 @@ rule flashLoan_MaintainsAssetBalance {
 
 }
 
+rule flashLoan_doesntAffectStorage {
+    env e;
+    uint256 amount;
+    bytes _data;
+
+    storage init = lastStorage;
+    flashLoan(e, amount, _data);
+    assert lastStorage[currentContract] == init[currentContract], "flashLoan doesn't affect the storage by any means";
+}
 //======================================
 // Twisted Rules
 //=======================================
