@@ -27,3 +27,7 @@ function borrowNonViews(method f) returns bool {
     f.selector == sig:touch().selector ;
 }
 
+//@audit-ok verified though not mutated
+// verifies that reentrancy by default is always set to false, and no dos is possible due to it
+invariant NoDosDueToReentrancy(env e)
+  !checkReentrancyLock(e);

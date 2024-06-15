@@ -60,6 +60,14 @@ contract BorrowingHarness is AbstractBaseHarness, Borrowing {
         return vaultStorage.totalBorrows.toUint();
     }
 
+    function totalBorrowsUpCustom() public view returns (uint256) {
+        return vaultStorage.totalBorrows.toAssetsUp().toUint();
+    }
+
+    function debtUpOfCustom(address account) public view returns (uint256) {
+        return vaultStorage.users[account].getOwed().toAssetsUp().toUint();
+    }
+
     function getUserDataCustom(
         address account
     ) external view returns (PackedUserSlot) {
@@ -70,23 +78,54 @@ contract BorrowingHarness is AbstractBaseHarness, Borrowing {
         return address(evc);
     }
 
-    //@audit-issue filter this in unexpected methods rule
-    function pullDebTransferBorrowHarness(
-        address from,
-        address to,
-        uint256 amount
-    ) public returns (uint _value) {
-        (VaultCache memory vaultCache, address account) = initOperationExternal(
-            OP_PULL_DEBT,
-            CHECKACCOUNT_CALLER
+    /**note this is just used to assume the correct state of the totalBorrows*/
+    function AllFormallyPossibleTotalBorrowValues(
+        uint _amount
+    ) public view returns (Owed) {
+        Assets _input = _amount.toAssets();
+        Owed amount = _input.toOwed();
+        return amount;
+    }
+
+    /**note similarly this one in spec returns all correct possible  user data values*/
+    function AllFormallyPossibleUserDataValues(
+        uint _amount
+    ) public view returns (PackedUserSlot) {
+        Assets _input = _amount.toAssets();
+        Owed owed = _input.toOwed();
+        PackedUserSlot emptyPreviousData;
+        uint256 data = PackedUserSlot.unwrap(emptyPreviousData);
+        uint256 OWED_OFFSET = 112;
+        uint256 OWED_MASK = 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000000000000000000000000000;
+
+        PackedUserSlot userData = PackedUserSlot.wrap(
+            (owed.toUint() << OWED_OFFSET) | (data & ~OWED_MASK)
         );
-        if (from == account) revert E_SelfTransfer();
+        return userData;
+        // self.data = PackedUserSlot.wrap((owed.toUint() << OWED_OFFSET) | (data & ~OWED_MASK));
+    }
 
-        Assets assets = amount == type(uint256).max
-            ? getCurrentOwed(vaultCache, from).toAssetsUp()
-            : amount.toAssets();
+    function interestAccumulatorCustom() public view returns (uint256) {
+        return vaultStorage.interestAccumulator;
+    }
 
-        if (assets.isZero()) 0;
-        transferBorrow(vaultCache, from, to, assets);
+    function interestAccumulatorOfCustom(
+        address _user
+    ) public view returns (uint256) {
+        return vaultStorage.users[_user].interestAccumulator;
+    }
+
+    function AssetBalance() public view returns (uint256) {
+        (IERC20 asset, , ) = ProxyUtils.metadata();
+        return asset.balanceOf(address(this));
+    }
+
+    function AssetBalanceOf(address user) public view returns (uint256) {
+        (IERC20 asset, , ) = ProxyUtils.metadata();
+        return asset.balanceOf(address(user));
+    }
+
+    function BorrowingModuleAddress() public view returns (address) {
+        return address(this);
     }
 }
