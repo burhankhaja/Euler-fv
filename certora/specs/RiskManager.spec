@@ -170,7 +170,6 @@ rule VaultStatusCheckIsRestricted {
    assert lastReverted, "checkVaultStatus must revert when either evc aint caller or checks aint in progress";
 }
 
-//@audit-issue figure out a way to filter array type signatures or else this will always fail
 rule noUnexpectedStateChangingMethodAvailable(method f) filtered {
     f -> !f.isView
    }{
