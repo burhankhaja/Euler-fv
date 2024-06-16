@@ -250,6 +250,11 @@ rule NoUnexpectedMethodsAvailable(env e, method f, calldataarg args) filtered{
 }
 
 //@audit-ok verified though not mutated
+// verifies that reentrancy by default is always set to false, and no dos is possible due to it
+invariant NoDosDueToReentrancy(env e)
+  !checkReentrancyLock(e);
+
+
 // verifies that state changing functions can't be reentered
 rule ReentrancyLockWorksCorrect(method f) filtered {
     f -> !f.isView
@@ -266,3 +271,25 @@ rule ReentrancyLockWorksCorrect(method f) filtered {
 
     assert borrowNonViews(f) => lastReverted, "no reentrancy is possible on the state changing methods";
 }
+
+//===========================
+// CVL HELPERS
+//==============================
+
+// filter borrowharness view like return functions
+function filterBorrowHarness(method f) returns bool {
+  return f.selector == sig:getVaultInterestAccExt().selector ||
+  f.selector == sig:getUnderlyingAssetExt().selector ||
+  f.selector == sig:initOperationExternal(uint32,address).selector ;
+}
+
+// get the function selector for the main borrow state changing methods only
+function borrowNonViews(method f) returns bool {
+    return f.selector == sig:borrow(uint256,address).selector ||
+    f.selector == sig:repay(uint256,address).selector ||
+    f.selector == sig:repayWithShares(uint256,address).selector ||
+    f.selector == sig:pullDebt(uint256,address).selector ||
+    f.selector == sig:flashLoan(uint256,bytes).selector ||
+    f.selector == sig:touch().selector ;
+}
+

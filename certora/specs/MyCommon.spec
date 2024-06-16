@@ -9,25 +9,3 @@ function filterABH(method f) returns bool {
     || f.selector == sig:getBalanceAndForwarderExt(address).selector
     || f.selector == sig:vaultCacheOracleConfigured().selector ;
 }
-
-// filter borrowharness view like return functions
-function filterBorrowHarness(method f) returns bool {
-  return f.selector == sig:getVaultInterestAccExt().selector ||
-  f.selector == sig:getUnderlyingAssetExt().selector ||
-  f.selector == sig:initOperationExternal(uint32,address).selector ;
-}
-
-// get the function selector for the main borrow state changing methods only
-function borrowNonViews(method f) returns bool {
-    return f.selector == sig:borrow(uint256,address).selector ||
-    f.selector == sig:repay(uint256,address).selector ||
-    f.selector == sig:repayWithShares(uint256,address).selector ||
-    f.selector == sig:pullDebt(uint256,address).selector ||
-    f.selector == sig:flashLoan(uint256,bytes).selector ||
-    f.selector == sig:touch().selector ;
-}
-
-//@audit-ok verified though not mutated
-// verifies that reentrancy by default is always set to false, and no dos is possible due to it
-invariant NoDosDueToReentrancy(env e)
-  !checkReentrancyLock(e);
