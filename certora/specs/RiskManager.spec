@@ -178,7 +178,7 @@ rule noUnexpectedStateChangingMethodAvailable(method f) filtered {
    calldataarg args;
  f(e,args);
 
-   assert true => (filterABH(f) || f.selector == sig:disableController().selector ||f.selector == sig:checkVaultStatus().selector /*|| f.selector == checkAccountStatus(address,address[]).selector*/), "Unexpected Statechanging functions detected in riskmanager module";
+   assert true => (filterABH(f) || f.selector == sig:disableController().selector ||f.selector == sig:checkVaultStatus().selector || f.selector == sig:checkAccountStatus(address,address[]).selector), "Unexpected Statechanging functions detected in riskmanager module";
 
 }
 
