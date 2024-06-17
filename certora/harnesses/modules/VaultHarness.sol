@@ -7,6 +7,8 @@ import "../../../src/EVault/modules/Vault.sol";
 import "../../../src/EVault/modules/Token.sol";
 
 contract VaultHarness is VaultModule, TokenModule, AbstractBaseHarness {
+    using TypesLib for *;
+
     constructor(Integrations memory integrations) Base(integrations) {}
 
     // Linked against DummyERC20A in verification config
@@ -105,5 +107,29 @@ contract VaultHarness is VaultModule, TokenModule, AbstractBaseHarness {
     function assetBalanceOfVault() public view returns (uint) {
         (IERC20 asset, , ) = ProxyUtils.metadata();
         return asset.balanceOf(address(this));
+    }
+
+    function assetBalanceOf(address account) public view returns (uint) {
+        (IERC20 asset, , ) = ProxyUtils.metadata();
+        return asset.balanceOf(account);
+    }
+
+    function evcAddress() public view returns (address) {
+        return address(evc);
+    }
+
+    function getLoadVault() public view returns (VaultCache memory vaultCache) {
+        return loadVault();
+    }
+
+    function toSharesDownExt(
+        Assets amount,
+        VaultCache memory vaultCache
+    ) public pure returns (Shares) {
+        return AssetsLib.toSharesDown(amount, vaultCache);
+    }
+
+    function UintToAssets(uint _num) public pure returns (Assets) {
+        return TypesLib.toAssets(_num);
     }
 }

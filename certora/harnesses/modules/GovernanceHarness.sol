@@ -5,5 +5,9 @@ import "../AbstractBaseHarness.sol";
 import "../../../src/EVault/modules/Governance.sol";
 
 contract GovernanceHarness is Governance, AbstractBaseHarness {
-    constructor(Integrations memory integrations) Governance (integrations) {}
+    constructor(Integrations memory integrations) Governance(integrations) {}
+
+    function isGovernor() public view returns (bool) {
+        return vaultStorage.governorAdmin == EVCAuthenticateGovernor();
+    }
 }
