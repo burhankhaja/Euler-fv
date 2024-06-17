@@ -42,12 +42,12 @@ rule deposit_AccountingIntegrity {
         VaultHarness.Assets amountToAssets = UintToAssets(e, amount); // only for using in tosharesdown
         VaultHarness.Shares shares = toSharesDownExt(e, amountToAssets, cache);
 
-        uint cashBefore = storage_cash(e);
+        mathint cashBefore = storage_cash(e);
 
         // ACTION
         deposit(e, amount, receiver);
         
-        uint cashBefore = storage_cash(e);
+        mathint cashAfter = storage_cash(e);
 
         /*
         @note finalizeDeposit(vaultCache, assets, shares, account, receiver);
@@ -56,9 +56,45 @@ rule deposit_AccountingIntegrity {
         
         */
         // assets == vaultCache.asset.balanceOf(account).toAssets()
-        assert amount == max_uint256 => cashAfter == cashBefore + evcCallerAssetBalanceBefore
-       
+        assert amount == max_uint256 => cashAfter == cashBefore + evcCallerAssetBalanceBefore, "cash must increase by whole asset balance of caller when demanded for maxuint";
+        assert amount < max_uint256 => cashAfter == cashBefore + amountToAssets, "cashes must increase by the amount";
 
+    
+}
+
+
+
+rule NoUnexpectedStateChangingMethod(method f) filtered {
+    !f.isView
+} {
+    env e;
+    calldataarg args;
+
+    f(e, args);
+
+    assert true => filterABH(f) ||
+     f.selector == sig:deposit(uint256 , address ).selector ||
+ f.selector == sig:mint(uint256 , address ).selector ||
+ f.selector == sig:withdraw(uint256 , address , address).selector ||
+ f.selector == sig:redeem(uint256 , address , address).selector ||
+ f.selector == sig:skim(uint256 , address ).selector, "Possibly buggy code detected";
+}
+
+rule evcIsAuthenticated(method f) filtered {
+    f -> f.selector == sig:deposit(uint256 , address ).selector ||
+ f.selector == sig:mint(uint256 , address ).selector ||
+ f.selector == sig:withdraw(uint256 , address , address).selector ||
+ f.selector == sig:redeem(uint256 , address , address).selector ||
+ f.selector == sig:skim(uint256 , address ).selector
+} {
+    env e;
+    calldataarg args;
+
+    require e.msg.sender != evcAddress(e);
+
+    
+    f@withrevert(e,args);
+    assert lastReverted, "calls must only be allowed from EVC";
 }
 
 
