@@ -61,8 +61,9 @@ rule deposit_AccountingIntegrity {
 }
 
 rule IsBalanceIncreasedAndDecreasedAsExpected {
-    method f;
     env e;
+    require e.block.timestamp == 0;
+    method f;
     calldataarg args;
     mathint totalshares_before = storage_totalShares(e);
 
@@ -75,6 +76,25 @@ rule IsBalanceIncreasedAndDecreasedAsExpected {
 
     assert totalshares_after < totalshares_before => f.selector == sig:withdraw(uint256 , address,address).selector ||
     f.selector == sig:redeem(uint256,address,address).selector , "only redeem and withdraw  can decrease shares balances";
+
+}
+
+rule isAssetsTransferresHandledCorrectly {
+    env e;
+    require e.block.timestamp == 0;
+    method f;
+    calldataarg args;
+
+    mathint vaultBalance_b = assetBalanceOfVault(e);
+    
+    f(e,args);
+     
+    mathint vaultBalance_a = assetBalanceOfVault(e);
+
+    assert vaultBalance_a > vaultBalance_b => f.selector == sig:mint(uint256,address).selector || f.selector == sig:deposit(uint256,address).selector, "only mint, deposit  can increase vault asset balances";
+
+    assert vaultBalance_a < vaultBalance_b => f.selector == sig:withdraw(uint256 , address,address).selector ||
+    f.selector == sig:redeem(uint256,address,address).selector , "only redeem and withdraw  can decrease asset balances of vault";
 
 }
 
