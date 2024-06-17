@@ -8,6 +8,7 @@ import "../../../src/EVault/modules/Token.sol";
 
 contract VaultHarness is VaultModule, TokenModule, AbstractBaseHarness {
     using TypesLib for *;
+    using UserStorageLib for *;
 
     constructor(Integrations memory integrations) Base(integrations) {}
 
@@ -131,5 +132,9 @@ contract VaultHarness is VaultModule, TokenModule, AbstractBaseHarness {
 
     function UintToAssets(uint _num) public pure returns (Assets) {
         return TypesLib.toAssets(_num);
+    }
+
+    function shareBalanceOf(address account) public view returns (Shares) {
+        return vaultStorage.users[account].getBalance();
     }
 }
